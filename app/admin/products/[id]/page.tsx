@@ -38,6 +38,7 @@ export default function ProductForm() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [thumbnailProgress, setThumbnailProgress] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [newThumbnailUrl, setNewThumbnailUrl] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -179,6 +180,23 @@ export default function ProductForm() {
       console.error("Erreur:", error);
       toast.error("Erreur lors du téléchargement");
       setIsUploadingThumbnail(false);
+    }
+  };
+
+  const handleAddThumbnailUrl = () => {
+    if (!newThumbnailUrl.trim()) return;
+
+    // Basic URL validation
+    try {
+      new URL(newThumbnailUrl);
+      setFormData((prev) => ({
+        ...prev,
+        thumbnails: [...prev.thumbnails, newThumbnailUrl],
+      }));
+      setNewThumbnailUrl("");
+      toast.success("Image ajoutée à la galerie");
+    } catch (e) {
+      toast.error("Veuillez entrer une URL valide");
     }
   };
 
@@ -485,6 +503,29 @@ export default function ProductForm() {
                 Ajoutez d'autres images pour montrer plus de détails.
               </p>
 
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="url"
+                  value={newThumbnailUrl}
+                  onChange={(e) => setNewThumbnailUrl(e.target.value)}
+                  placeholder="https://exemple.com/image-detail.jpg"
+                  className="flex-1 px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddThumbnailUrl();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddThumbnailUrl}
+                  className="bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 px-6 py-3 rounded-xl font-medium transition-colors whitespace-nowrap"
+                >
+                  Ajouter
+                </button>
+              </div>
+
               <div className="grid grid-cols-3 gap-4 mb-4">
                 {formData.thumbnails.map((thumbUrl, index) => (
                   <div
@@ -507,32 +548,6 @@ export default function ProductForm() {
                     </button>
                   </div>
                 ))}
-
-                <div className="aspect-square relative rounded-xl overflow-hidden border border-dashed border-neutral-300 dark:border-neutral-700 flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                  <input
-                    type="file"
-                    id="thumbnail-upload"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleThumbnailUpload}
-                    disabled={isUploadingThumbnail}
-                  />
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer"
-                  >
-                    {isUploadingThumbnail ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
-                    ) : (
-                      <>
-                        <Upload className="w-6 h-6 text-neutral-400 mb-1" />
-                        <span className="text-xs text-neutral-500 font-medium">
-                          Ajouter
-                        </span>
-                      </>
-                    )}
-                  </label>
-                </div>
               </div>
             </div>
           </div>

@@ -8,12 +8,20 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Allow access to remote image placeholder and any HTTPS image source for products.
+  // Allow access to remote image placeholder and any HTTPS/HTTP image source for products.
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
