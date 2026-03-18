@@ -26,6 +26,7 @@ export default function ProductPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string>("");
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
@@ -37,6 +38,10 @@ export default function ProductPage() {
         if (docSnap.exists()) {
           const prodData = { id: docSnap.id, ...docSnap.data() } as Product;
           setProduct(prodData);
+          setSelectedImage(
+            prodData.imageUrl ||
+              `https://picsum.photos/seed/${prodData.id}/1200/1600`,
+          );
 
           if (prodData.categoryId) {
             const catRef = doc(db, "categories", prodData.categoryId);
@@ -99,6 +104,11 @@ export default function ProductPage() {
       </div>
     );
 
+  const allImages = [
+    product.imageUrl || `https://picsum.photos/seed/${product.id}/1200/1600`,
+    ...(product.thumbnails || []),
+  ];
+
   return (
     <div className="container mx-auto px-4 py-12">
       <button
@@ -110,23 +120,46 @@ export default function ProductPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         {/* Image Section */}
-        <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-          <Image
-            src={
-              product.imageUrl ||
-              `https://picsum.photos/seed/${product.id}/1200/1600`
-            }
-            alt={product.name}
-            fill
-            className="object-cover"
-            referrerPolicy="no-referrer"
-            priority
-          />
-          {product.stock === 0 && (
-            <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <span className="bg-red-500 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg transform -rotate-12">
-                Rupture de stock
-              </span>
+        <div className="space-y-4">
+          <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <Image
+              src={selectedImage}
+              alt={product.name}
+              fill
+              className="object-cover transition-opacity duration-300"
+              referrerPolicy="no-referrer"
+              priority
+            />
+            {product.stock === 0 && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                <span className="bg-red-500 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg transform -rotate-12">
+                  Rupture de stock
+                </span>
+              </div>
+            )}
+          </div>
+
+          {allImages.length > 1 && (
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              {allImages.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(img)}
+                  className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all snap-start ${
+                    selectedImage === img
+                      ? "border-amber-600 shadow-md"
+                      : "border-transparent hover:border-amber-300 opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${product.name} - vue ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </button>
+              ))}
             </div>
           )}
         </div>

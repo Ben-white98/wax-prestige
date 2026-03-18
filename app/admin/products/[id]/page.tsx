@@ -10,9 +10,16 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db, storage } from "@/lib/firebase";
 import { Category, Product } from "@/types";
-import { Loader2, ArrowLeft, Save, Image as ImageIcon } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Save,
+  Image as ImageIcon,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +33,10 @@ export default function ProductForm() {
 
   const [loading, setLoading] = useState(!isNew);
   const [submitting, setSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [thumbnailProgress, setThumbnailProgress] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [formData, setFormData] = useState({
@@ -35,6 +46,7 @@ export default function ProductForm() {
     stock: 0,
     categoryId: "",
     imageUrl: "",
+    thumbnails: [] as string[],
   });
 
   useEffect(() => {
@@ -60,6 +72,7 @@ export default function ProductForm() {
               stock: data.stock,
               categoryId: data.categoryId,
               imageUrl: data.imageUrl || "",
+              thumbnails: data.thumbnails || [],
             });
           } else {
             toast.error("Produit introuvable");
@@ -76,6 +89,105 @@ export default function ProductForm() {
 
     fetchInitialData();
   }, [id, isNew, router]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error("Erreur d'upload:", error);
+          toast.error("Erreur lors du téléchargement de l'image");
+          setIsUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setFormData({ ...formData, imageUrl: downloadURL });
+          setIsUploading(false);
+          toast.success("Image téléchargée avec succès");
+        },
+      );
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Erreur lors du téléchargement");
+      setIsUploading(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setThumbnailProgress(0);
+
+    try {
+      const storageRef = ref(
+        storage,
+        `products/thumbnails/${Date.now()}_${file.name}`,
+      );
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setThumbnailProgress(progress);
+        },
+        (error) => {
+          console.error("Erreur d'upload:", error);
+          toast.error("Erreur lors du téléchargement de l'image");
+          setIsUploadingThumbnail(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setFormData((prev) => ({
+            ...prev,
+            thumbnails: [...prev.thumbnails, downloadURL],
+          }));
+          setIsUploadingThumbnail(false);
+          toast.success("Image ajoutée à la galerie");
+        },
+      );
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Erreur lors du téléchargement");
+      setIsUploadingThumbnail(false);
+    }
+  };
+
+  const removeThumbnail = (indexToRemove: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      thumbnails: prev.thumbnails.filter((_, index) => index !== indexToRemove),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,7 +400,51 @@ export default function ProductForm() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                URL de l'image
+                Image du produit
+              </label>
+
+              <div className="mb-6 bg-neutral-50 dark:bg-neutral-800/50 p-6 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 text-center">
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className={`cursor-pointer inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
+                    isUploading
+                      ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-500 cursor-not-allowed"
+                      : "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+                  }`}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Téléchargement... {Math.round(uploadProgress)}%
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5" />
+                      Télécharger une image depuis votre appareil
+                    </>
+                  )}
+                </label>
+                <p className="text-xs text-neutral-500 mt-3">
+                  Formats acceptés : JPG, PNG, WebP. Taille max : 5Mo.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800"></div>
+                <span className="text-sm text-neutral-500 font-medium">OU</span>
+                <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800"></div>
+              </div>
+
+              <label className="block text-sm font-medium mb-2">
+                URL de l'image (Lien externe)
               </label>
               <input
                 type="url"
@@ -297,12 +453,8 @@ export default function ProductForm() {
                   setFormData({ ...formData, imageUrl: e.target.value })
                 }
                 placeholder="https://exemple.com/image.jpg"
-                className="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 mb-4"
+                className="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-500 mb-6"
               />
-              <p className="text-xs text-neutral-500 mb-4">
-                Pour cet aperçu, vous pouvez utiliser une URL d'image publique
-                (ex: Unsplash, Picsum).
-              </p>
 
               <div className="aspect-[3/4] w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center relative">
                 {formData.imageUrl ? (
@@ -321,6 +473,66 @@ export default function ProductForm() {
                     </span>
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* Galerie d'images (Thumbnails) */}
+            <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800">
+              <label className="block text-sm font-medium mb-2">
+                Galerie d'images (Optionnel)
+              </label>
+              <p className="text-xs text-neutral-500 mb-4">
+                Ajoutez d'autres images pour montrer plus de détails.
+              </p>
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {formData.thumbnails.map((thumbUrl, index) => (
+                  <div
+                    key={index}
+                    className="aspect-square relative rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 group"
+                  >
+                    <Image
+                      src={thumbUrl}
+                      alt={`Miniature ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeThumbnail(index)}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                ))}
+
+                <div className="aspect-square relative rounded-xl overflow-hidden border border-dashed border-neutral-300 dark:border-neutral-700 flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                  <input
+                    type="file"
+                    id="thumbnail-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleThumbnailUpload}
+                    disabled={isUploadingThumbnail}
+                  />
+                  <label
+                    htmlFor="thumbnail-upload"
+                    className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer"
+                  >
+                    {isUploadingThumbnail ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-neutral-400 mb-1" />
+                        <span className="text-xs text-neutral-500 font-medium">
+                          Ajouter
+                        </span>
+                      </>
+                    )}
+                  </label>
+                </div>
               </div>
             </div>
           </div>
