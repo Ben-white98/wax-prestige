@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Un pagne (wax print) vendu sur la boutique.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Le nom du pagne."
+        },
+        "description": {
+          "type": "string",
+          "description": "La description détaillée du produit."
+        },
+        "price": {
+          "type": "number",
+          "description": "Le prix du pagne."
+        },
+        "stock": {
+          "type": "number",
+          "description": "La quantité disponible en stock."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "L'ID de la catégorie à laquelle appartient le produit."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "L'URL de l'image du produit stockée dans Firebase Storage."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "La date de création du produit."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "La date de dernière mise à jour du produit."
+        }
+      },
+      "required": ["name", "description", "price", "stock", "categoryId", "imageUrl", "createdAt", "updatedAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Une catégorie ou étiquette de pagne (ex: Vlisco, Uniwax, Hitarget).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Le nom de la catégorie."
+        },
+        "description": {
+          "type": "string",
+          "description": "La description de la catégorie."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "La date de création de la catégorie."
+        }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "Contact": {
+      "title": "Contact",
+      "description": "Un message envoyé via le formulaire de contact.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Le nom de l'expéditeur."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "L'adresse email de l'expéditeur."
+        },
+        "message": {
+          "type": "string",
+          "description": "Le contenu du message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "La date d'envoi du message."
+        }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Collection contenant tous les produits (pagnes)."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Collection contenant toutes les catégories de produits."
+    },
+    "/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/Contact" },
+      "description": "Collection contenant les messages de contact."
+    }
+  }
+}
