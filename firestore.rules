@@ -84,9 +84,9 @@ service cloud.firestore {
 
     function isValidContact(data) {
       return hasRequiredFields(['name', 'email', 'message', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.email is string && isValidEmail(data.email) && data.email.size() < 100 &&
-             data.message is string && data.message.size() > 0 && data.message.size() < 2000 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 150 &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 150 &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 3000 &&
              data.createdAt is timestamp;
     }
 

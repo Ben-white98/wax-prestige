@@ -31,9 +31,10 @@ export default function ContactPage() {
       });
       toast.success("Votre message a été envoyé avec succès !");
       setFormData({ name: "", email: "", message: "" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur d'envoi:", error);
-      toast.error("Une erreur est survenue lors de l'envoi du message.");
+      const errorMessage = error?.message || "Erreur inconnue";
+      toast.error(`Une erreur est survenue : ${errorMessage}`);
     } finally {
       setLoading(false);
     }
