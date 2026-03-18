@@ -48,6 +48,8 @@ export default function ProductForm() {
     categoryId: "",
     imageUrl: "",
     thumbnails: [] as string[],
+    isPromo: false,
+    promoPrice: 0,
   });
 
   useEffect(() => {
@@ -74,6 +76,8 @@ export default function ProductForm() {
               categoryId: data.categoryId,
               imageUrl: data.imageUrl || "",
               thumbnails: data.thumbnails || [],
+              isPromo: data.isPromo || false,
+              promoPrice: data.promoPrice || 0,
             });
           } else {
             toast.error("Produit introuvable");
@@ -397,6 +401,48 @@ export default function ProductForm() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isPromo"
+                  checked={formData.isPromo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isPromo: e.target.checked })
+                  }
+                  className="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                />
+                <label
+                  htmlFor="isPromo"
+                  className="text-sm font-medium text-amber-900 dark:text-amber-100"
+                >
+                  Mettre ce produit en promotion (Affiché dans le carrousel
+                  d'accueil)
+                </label>
+              </div>
+
+              {formData.isPromo && (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-amber-900 dark:text-amber-100">
+                    Prix promotionnel (FCFA) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.promoPrice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        promoPrice: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    required={formData.isPromo}
+                  />
+                </div>
+              )}
             </div>
 
             <div>

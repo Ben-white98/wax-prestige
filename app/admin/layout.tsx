@@ -13,6 +13,7 @@ import {
   Loader2,
   Menu,
   X,
+  Crown,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -70,8 +71,11 @@ export default function AdminLayout({
         <div className="h-20 flex items-center justify-between px-6 border-b border-neutral-200 dark:border-neutral-800">
           <Link
             href="/admin"
-            className="font-serif text-2xl font-bold text-amber-600"
+            className="flex items-center gap-2 font-serif text-2xl font-bold text-amber-600"
           >
+            <div className="bg-amber-100 dark:bg-amber-900/40 p-1.5 rounded-lg">
+              <Crown className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+            </div>
             Admin
           </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden">
@@ -125,9 +129,14 @@ export default function AdminLayout({
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2">
             <Menu className="w-6 h-6" />
           </button>
-          <span className="font-serif text-xl font-bold text-amber-600 ml-2">
-            Admin
-          </span>
+          <div className="flex items-center gap-2 ml-2">
+            <div className="bg-amber-100 dark:bg-amber-900/40 p-1.5 rounded-lg">
+              <Crown className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+            </div>
+            <span className="font-serif text-xl font-bold text-amber-600">
+              Admin
+            </span>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8">{children}</div>

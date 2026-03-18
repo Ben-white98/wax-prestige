@@ -1,50 +1,106 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import Image from "next/image";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Product } from "@/types";
 
-const slides = [
+const defaultSlides = [
   {
-    id: 1,
+    id: "default-1",
     title: "Nouvelle Collection Vlisco",
     subtitle: "L'élégance à l'état pur pour vos grandes occasions.",
     image: "https://picsum.photos/seed/wax1/1920/1080?blur=1",
     cta: "Découvrir",
-    link: "/catalogue?category=vlisco"
+    link: "/catalogue?category=vlisco",
   },
   {
-    id: 2,
+    id: "default-2",
     title: "Promotions Exclusives",
     subtitle: "Jusqu'à -30% sur une sélection de pagnes Hitarget.",
     image: "https://picsum.photos/seed/wax2/1920/1080?blur=1",
     cta: "Voir les promos",
-    link: "/catalogue?promo=true"
+    link: "/catalogue?promo=true",
   },
   {
-    id: 3,
+    id: "default-3",
     title: "Uniwax Authentique",
     subtitle: "Des couleurs vibrantes et des motifs uniques.",
     image: "https://picsum.photos/seed/wax3/1920/1080?blur=1",
     cta: "Acheter maintenant",
-    link: "/catalogue?category=uniwax"
+    link: "/catalogue?category=uniwax",
   },
 ];
 
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0);
+  const [slides, setSlides] = useState(defaultSlides);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchPromoProducts = async () => {
+      try {
+        const q = query(
+          collection(db, "products"),
+          where("isPromo", "==", true),
+          limit(5),
+        );
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+          const promoSlides = snapshot.docs.map((doc) => {
+            const data = doc.data() as Product;
+            return {
+              id: doc.id,
+              title: data.name,
+              subtitle: data.promoPrice
+                ? `En promotion à ${data.promoPrice} FCFA au lieu de ${data.price} FCFA`
+                : data.description.substring(0, 100) + "...",
+              image:
+                data.imageUrl ||
+                "https://picsum.photos/seed/wax1/1920/1080?blur=1",
+              cta: "Acheter maintenant",
+              link: `/catalogue`,
+            };
+          });
+          setSlides(promoSlides);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des promotions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPromoProducts();
+  }, []);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
-  const nextSlide = () => setCurrent(current === slides.length - 1 ? 0 : current + 1);
-  const prevSlide = () => setCurrent(current === 0 ? slides.length - 1 : current - 1);
+  const nextSlide = () =>
+    setCurrent(current === slides.length - 1 ? 0 : current + 1);
+  const prevSlide = () =>
+    setCurrent(current === 0 ? slides.length - 1 : current - 1);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[60vh] md:h-[80vh] bg-neutral-900 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
+      </div>
+    );
+  }
+
+  if (slides.length === 0) return null;
 
   return (
     <div className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden bg-neutral-900">
@@ -122,7 +178,9 @@ export function HeroCarousel() {
             onClick={() => setCurrent(index)}
             aria-label={`Aller à la diapositive ${index + 1}`}
             className={`w-3 h-3 rounded-full transition-colors ${
-              index === current ? 'bg-amber-500' : 'bg-white/50 hover:bg-white/80'
+              index === current
+                ? "bg-amber-500"
+                : "bg-white/50 hover:bg-white/80"
             }`}
           />
         ))}

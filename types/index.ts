@@ -7,6 +7,8 @@ export interface Product {
   categoryId: string;
   imageUrl: string;
   thumbnails?: string[];
+  isPromo?: boolean;
+  promoPrice?: number;
   createdAt?: any;
   updatedAt?: any;
 }

@@ -1,13 +1,19 @@
 import Link from "next/link";
+import { Crown } from "lucide-react";
 
 export function Footer() {
   return (
     <footer className="bg-neutral-100 dark:bg-neutral-900 py-12 border-t border-neutral-200 dark:border-neutral-800 mt-auto">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <h3 className="font-serif text-2xl font-bold text-amber-600 mb-4">
-            Wax Prestige
-          </h3>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-amber-100 dark:bg-amber-900/40 p-1.5 rounded-lg">
+              <Crown className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+            </div>
+            <h3 className="font-serif text-2xl font-bold text-amber-600">
+              Wax Prestige
+            </h3>
+          </div>
           <p className="text-neutral-600 dark:text-neutral-400">
             Votre boutique de référence pour les pagnes africains de haute
             qualité. Élégance, authenticité et prestige.
