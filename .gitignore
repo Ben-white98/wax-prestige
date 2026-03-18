@@ -75,4 +75,4 @@ build/Release
 
 # Vite logs
 vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+vite.config.ts.timestamp-*.env.local
