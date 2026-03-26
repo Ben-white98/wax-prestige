@@ -7,6 +7,7 @@ import {
   deleteDoc,
   doc,
   addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Product, Category } from "@/types";
@@ -101,8 +102,8 @@ export default function AdminProducts() {
                 description,
                 categoryId,
                 imageUrl,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
               });
               importedCount++;
             }
