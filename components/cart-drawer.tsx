@@ -3,17 +3,30 @@
 import { useCartStore } from "@/lib/store";
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, updateQuantity, removeItem, getTotal } =
-    useCartStore();
+  const {
+    items,
+    isOpen,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    getTotal,
+    clearCart,
+  } = useCartStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
+
+  const handleClearCart = () => {
+    if (confirm("Êtes-vous sûr de vouloir vider tout votre panier ?")) {
+      clearCart();
+    }
+  };
 
   const handleCheckout = () => {
     const phoneNumber = "22898797093"; // Replace with actual WhatsApp number
@@ -49,9 +62,19 @@ export function CartDrawer() {
             className="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-neutral-950 shadow-2xl z-50 flex flex-col border-l border-neutral-200 dark:border-neutral-800"
           >
             <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5" /> Mon Panier
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5" /> Mon Panier
+                </h2>
+                {items.length > 0 && (
+                  <button
+                    onClick={handleClearCart}
+                    className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 font-medium bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-2.5 py-1.5 rounded-md transition-colors border border-red-100 dark:border-red-900/30"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Vider
+                  </button>
+                )}
+              </div>
               <button
                 onClick={closeCart}
                 className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"

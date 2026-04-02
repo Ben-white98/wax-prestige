@@ -30,6 +30,8 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -67,10 +69,51 @@ export default function AdminProducts() {
       try {
         await deleteDoc(doc(db, "products", id));
         toast.success("Produit supprimé");
+        setSelectedIds((prev) =>
+          prev.filter((selectedId) => selectedId !== id),
+        );
         fetchData();
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors de la suppression");
+      }
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === products.length && products.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map((p) => p.id));
+    }
+  };
+
+  const toggleSelectProduct = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir supprimer ces ${selectedIds.length} produits ?`,
+      )
+    ) {
+      setIsDeletingBulk(true);
+      try {
+        await Promise.all(
+          selectedIds.map((id) => deleteDoc(doc(db, "products", id))),
+        );
+        toast.success(`${selectedIds.length} produits supprimés avec succès`);
+        setSelectedIds([]);
+        fetchData();
+      } catch (error) {
+        console.error("Erreur:", error);
+        toast.error("Erreur lors de la suppression groupée");
+      } finally {
+        setIsDeletingBulk(false);
       }
     }
   };
@@ -169,6 +212,20 @@ export default function AdminProducts() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold">Produits</h1>
         <div className="flex flex-wrap items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={isDeletingBulk}
+              className="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors text-sm border border-red-200 dark:border-red-800/50"
+            >
+              {isDeletingBulk ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Supprimer ({selectedIds.length})
+            </button>
+          )}
           <button
             onClick={downloadTemplate}
             className="bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors text-sm"
@@ -211,6 +268,17 @@ export default function AdminProducts() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
+                <th className="p-4 w-12">
+                  <input
+                    type="checkbox"
+                    checked={
+                      products.length > 0 &&
+                      selectedIds.length === products.length
+                    }
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-neutral-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
+                  />
+                </th>
                 <th className="p-4 font-medium text-neutral-500 w-24">Image</th>
                 <th className="p-4 font-medium text-neutral-500">Nom</th>
                 <th className="p-4 font-medium text-neutral-500">Catégorie</th>
@@ -224,7 +292,7 @@ export default function AdminProducts() {
             <tbody>
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-neutral-500">
+                  <td colSpan={7} className="p-8 text-center text-neutral-500">
                     Aucun produit trouvé.
                   </td>
                 </tr>
@@ -232,8 +300,16 @@ export default function AdminProducts() {
                 products.map((product) => (
                   <tr
                     key={product.id}
-                    className="border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-950/50 transition-colors"
+                    className={`border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-950/50 transition-colors ${selectedIds.includes(product.id) ? "bg-amber-50/50 dark:bg-amber-900/10" : ""}`}
                   >
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(product.id)}
+                        onChange={() => toggleSelectProduct(product.id)}
+                        className="w-4 h-4 rounded border-neutral-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
+                      />
+                    </td>
                     <td className="p-4">
                       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                         {product.imageUrl ? (
