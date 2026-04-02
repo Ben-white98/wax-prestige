@@ -182,6 +182,7 @@ export default function CataloguePage() {
               className="bg-transparent border-none outline-none py-2 pr-4 pl-2 text-sm font-medium cursor-pointer"
             >
               <option value={5}>5 par page</option>
+              <option value={2}>2 par page</option>
               <option value={10}>10 par page</option>
               <option value={12}>12 par page</option>
               <option value={20}>20 par page</option>
