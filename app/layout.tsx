@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Boutique en ligne professionnelle de vente de pagnes (African wax prints).",
 
   verification: {
-    google: "TON_CODE_ICI",
+    google: "dADPQfvSn2XoYLrFe6xXbieYK-3IFZZNOZXCs3d5WSU",
   },
 };
 
