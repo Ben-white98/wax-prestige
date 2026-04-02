@@ -15,10 +15,11 @@ import {
 import { db } from "@/lib/firebase";
 import { Product, Category } from "@/types";
 import { ProductCard } from "@/components/client/product-card";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function CataloguePage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -77,7 +78,8 @@ export default function CataloguePage() {
           ...doc.data(),
         })) as Product[];
 
-        setProducts(fetchedProducts);
+        setAllProducts(fetchedProducts);
+        setCurrentPage(0);
 
         if (prodSnapshot.docs.length < itemsPerPage) {
           setHasMore(false);
@@ -94,7 +96,14 @@ export default function CataloguePage() {
     fetchInitialProducts();
   }, [selectedCategory, itemsPerPage]);
 
-  const loadMoreProducts = async () => {
+  const handleNextPage = async () => {
+    // Si on a déjà les produits en mémoire, on passe juste à la page suivante
+    if ((currentPage + 1) * itemsPerPage < allProducts.length) {
+      setCurrentPage((prev) => prev + 1);
+      return;
+    }
+
+    // Sinon, on va chercher la suite sur Firebase
     if (!lastVisible || !hasMore) return;
 
     setLoadingMore(true);
@@ -123,7 +132,8 @@ export default function CataloguePage() {
         ...doc.data(),
       })) as Product[];
 
-      setProducts((prev) => [...prev, ...newProducts]);
+      setAllProducts((prev) => [...prev, ...newProducts]);
+      setCurrentPage((prev) => prev + 1);
 
       if (prodSnapshot.docs.length < itemsPerPage) {
         setHasMore(false);
@@ -137,8 +147,18 @@ export default function CataloguePage() {
     }
   };
 
-  // We no longer filter client-side since Firestore does it
-  const filteredProducts = products;
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  // Produits à afficher pour la page courante
+  const currentProducts = allProducts.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage,
+  );
+  const isNextDisabled =
+    !hasMore && (currentPage + 1) * itemsPerPage >= allProducts.length;
+  const isPrevDisabled = currentPage === 0;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -182,10 +202,10 @@ export default function CataloguePage() {
               className="bg-transparent border-none outline-none py-2 pr-4 pl-2 text-sm font-medium cursor-pointer"
             >
               <option value={5}>5 par page</option>
-              <option value={2}>2 par page</option>
               <option value={10}>10 par page</option>
               <option value={12}>12 par page</option>
               <option value={20}>20 par page</option>
+              <option value={30}>30 par page</option>
               <option value={50}>50 par page</option>
             </select>
           </div>
@@ -196,27 +216,40 @@ export default function CataloguePage() {
         <div className="flex justify-center py-32">
           <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
         </div>
-      ) : filteredProducts.length > 0 ? (
+      ) : currentProducts.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+            {currentProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
-          {hasMore && (
-            <div className="mt-12 flex justify-center">
+          {/* Pagination stylisée avec flèches */}
+          {(allProducts.length > itemsPerPage || hasMore) && (
+            <div className="mt-16 flex items-center justify-center gap-6">
               <button
-                onClick={loadMoreProducts}
-                disabled={loadingMore}
-                className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 text-white px-8 py-3 rounded-full font-medium transition-all disabled:opacity-70 flex items-center gap-2"
+                onClick={handlePrevPage}
+                disabled={isPrevDisabled || loadingMore}
+                className="group flex items-center justify-center w-14 h-14 rounded-full border-2 border-amber-600 text-amber-600 dark:text-amber-500 hover:bg-amber-600 hover:text-white transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-amber-600 shadow-sm hover:shadow-lg hover:shadow-amber-600/20"
+                aria-label="Page précédente"
+              >
+                <ChevronLeft className="w-7 h-7 transition-transform group-hover:-translate-x-1" />
+              </button>
+
+              <span className="text-lg font-medium text-neutral-600 dark:text-neutral-400 min-w-[80px] text-center">
+                Page {currentPage + 1}
+              </span>
+
+              <button
+                onClick={handleNextPage}
+                disabled={isNextDisabled || loadingMore}
+                className="group flex items-center justify-center w-14 h-14 rounded-full border-2 border-amber-600 text-amber-600 dark:text-amber-500 hover:bg-amber-600 hover:text-white transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-amber-600 shadow-sm hover:shadow-lg hover:shadow-amber-600/20"
+                aria-label="Page suivante"
               >
                 {loadingMore ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Chargement...
-                  </>
+                  <Loader2 className="w-6 h-6 animate-spin" />
                 ) : (
-                  "Voir plus de pagnes"
+                  <ChevronRight className="w-7 h-7 transition-transform group-hover:translate-x-1" />
                 )}
               </button>
             </div>
