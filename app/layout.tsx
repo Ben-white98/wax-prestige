@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "Wax Prestige | Boutique de Pagnes",
   description:
     "Boutique en ligne professionnelle de vente de pagnes (African wax prints).",
+
+  verification: {
+    google: "TON_CODE_ICI",
+  },
 };
 
 export default function RootLayout({
